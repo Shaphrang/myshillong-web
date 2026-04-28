@@ -1,21 +1,13 @@
 import type { Metadata } from 'next';
 import { HomePage } from '@/components/public/home/HomePage';
-import { getHomePageData } from '@/lib/public/home';
+import { getHomePageData } from '@/lib/public/home-data';
 
 export const metadata: Metadata = {
-  title: 'MyShillong | Discover Local Businesses, Food, Fashion & Deals',
-  description:
-    'Discover food, cafes, fashion stores, deals, offers, and local businesses in Shillong with MyShillong.',
-  openGraph: {
-    title: 'MyShillong | Discover Local Businesses, Food, Fashion & Deals',
-    description:
-      'Discover food, cafes, fashion stores, deals, offers, and local businesses in Shillong with MyShillong.',
-    type: 'website',
-  },
+  title: 'MyShillong | Shop Local, Discover Local',
+  description: 'Discover food, fashion, deals and local businesses in Shillong.',
 };
 
 export default async function Home() {
   const data = await getHomePageData();
-
   return <HomePage data={data} />;
 }
