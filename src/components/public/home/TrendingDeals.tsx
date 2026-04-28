@@ -1,17 +1,27 @@
-import type { HomeDealItem } from '@/lib/public/fallback-home-data';
-import { DealCard } from './DealCard';
-import { SectionHeader } from './SectionHeader';
+import Link from 'next/link';
+import type { HomeDeal } from '@/lib/public/home-demo-data';
+import { SafeImage } from '@/components/public/SafeImage';
 
-export function TrendingDeals({ deals }: { deals: HomeDealItem[] }) {
+export function TrendingDeals({ deals }: { deals: HomeDeal[] }) {
   return (
-    <section>
-      <SectionHeader title="Trending Deals 🔥" viewAllHref="/deals" />
-      <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 xl:grid-cols-3">
-        {deals.map((deal) => (
-          <div key={deal.id} className="snap-start">
-            <DealCard deal={deal} />
-          </div>
-        ))}
+    <section className="px-4">
+      <div className="mx-auto max-w-lg rounded-2xl border border-[#eee5dc] bg-[#fffdf8] p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-extrabold tracking-[0.16em] text-[#2f5133]">TRENDING DEALS</h2>
+          <Link href="/deals" className="text-sm font-semibold text-[#2f5133]">View All Deals →</Link>
+        </div>
+        <div className="-mx-1 flex gap-3 overflow-x-auto px-1 pb-1">
+          {deals.map((deal) => (
+            <Link href={deal.href} key={deal.id} className="min-w-48 rounded-2xl border border-[#eee5dc] bg-white p-2.5 shadow-sm">
+              <div className="relative h-20 overflow-hidden rounded-xl">
+                <SafeImage src={deal.imagePath} alt={deal.title} fill className="object-cover" fallbackLabel="Deal Image" type="deal" />
+              </div>
+              <p className="mt-2 text-sm font-bold text-[#e94b35]">{deal.discountLabel}</p>
+              <p className="line-clamp-1 text-sm font-semibold text-[#172033]">{deal.businessName}</p>
+              <p className="text-xs text-[#667085]">{deal.locality}</p>
+            </Link>
+          ))}
+        </div>
       </div>
     </section>
   );
