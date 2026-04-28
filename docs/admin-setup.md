@@ -1,14 +1,43 @@
 # MyShillong Admin Setup
 
-1. Create a user in Supabase Authentication.
-2. Copy the user's `auth.users.id`.
-3. Insert into `public.admin_profiles`:
+A Supabase Auth user is not automatically an admin user. The same user ID must exist in `public.admin_profiles` with `is_active = true`.
+
+## 1) Check existing Auth users vs admin profiles
 
 ```sql
-insert into public.admin_profiles (id, full_name, role, is_active)
-values ('PASTE_AUTH_USER_ID_HERE', 'MyShillong Admin', 'admin', true)
-on conflict (id) do update
-set role = 'admin', is_active = true, updated_at = now();
+select
+  au.id,
+  au.email,
+  ap.full_name,
+  ap.role,
+  ap.is_active
+from auth.users au
+left join public.admin_profiles ap on ap.id = au.id
+order by au.created_at desc;
 ```
 
-4. Login at `/admin/login`.
+## 2) Upsert admin profile for your login email (if missing)
+
+```sql
+insert into public.admin_profiles (
+  id,
+  full_name,
+  role,
+  is_active
+)
+select
+  id,
+  coalesce(email, 'MyShillong Admin'),
+  'admin',
+  true
+from auth.users
+where email = 'YOUR_EMAIL_HERE'
+on conflict (id) do update
+set
+  full_name = excluded.full_name,
+  role = 'admin',
+  is_active = true,
+  updated_at = now();
+```
+
+Replace `YOUR_EMAIL_HERE` with your actual admin login email.

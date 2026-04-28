@@ -1,32 +1,52 @@
-//src\lib\supabase\server.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { getSupabaseEnv } from './client';
 
-async function getAccessToken() {
+export async function createClient() {
+  const env = getSupabaseEnv();
+
+  if (!env) {
+    throw new Error('Supabase environment variables are not configured.');
+  }
+
   const cookieStore = await cookies();
-  return cookieStore.get('sb-access-token')?.value;
+
+  return createServerClient(env.url, env.key, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll();
+      },
+      setAll(cookiesToSet) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        } catch {
+          // Safe to ignore in Server Components.
+          // Server Actions can set cookies correctly.
+        }
+      },
+    },
+  });
 }
 
-async function authHeaders() {
+async function getRestHeaders() {
   const env = getSupabaseEnv();
   if (!env) return null;
 
-  const { key } = env;
-  const token = await getAccessToken();
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
 
   return {
-    apikey: key,
-    Authorization: token ? `Bearer ${token}` : `Bearer ${key}`,
+    apikey: env.key,
+    Authorization: `Bearer ${session?.access_token ?? env.key}`,
   };
 }
 
-function buildRestUrl(
-  baseUrl: string,
-  tableOrView: string,
-  select = '*',
-  filters?: Record<string, string>
-) {
+function buildRestUrl(baseUrl: string, tableOrView: string, select = '*', filters?: Record<string, string>) {
   const params = new URLSearchParams();
   params.set('select', select);
 
@@ -42,36 +62,21 @@ function buildRestUrl(
 }
 
 export async function getAuthUser() {
-  const env = getSupabaseEnv();
-  if (!env) return null;
-
-  const { url } = env;
-  const headers = await authHeaders();
-  if (!headers) return null;
-
-  const res = await fetch(`${url}/auth/v1/user`, {
-    headers,
-    cache: 'no-store',
-  });
-
-  if (!res.ok) return null;
-
-  return res.json();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  return user;
 }
 
-export async function sbSelect(
-  tableOrView: string,
-  select = '*',
-  filters?: Record<string, string>
-): Promise<any[]> {
+export async function sbSelect(tableOrView: string, select = '*', filters?: Record<string, string>): Promise<any[]> {
   const env = getSupabaseEnv();
   if (!env) return [];
 
-  const { url } = env;
-  const headers = await authHeaders();
+  const headers = await getRestHeaders();
   if (!headers) return [];
 
-  const res = await fetch(buildRestUrl(url, tableOrView, select, filters), {
+  const res = await fetch(buildRestUrl(env.url, tableOrView, select, filters), {
     headers,
     cache: 'no-store',
   });
@@ -83,18 +88,14 @@ export async function sbSelect(
   return await res.json();
 }
 
-export async function sbRpc<T = unknown>(
-  fn: string,
-  body: Record<string, unknown>
-) {
+export async function sbRpc<T = unknown>(fn: string, body: Record<string, unknown>) {
   const env = getSupabaseEnv();
   if (!env) throw new Error('Supabase env vars are missing.');
 
-  const { url } = env;
-  const headers = await authHeaders();
+  const headers = await getRestHeaders();
   if (!headers) throw new Error('Supabase auth headers are unavailable.');
 
-  const res = await fetch(`${url}/rest/v1/rpc/${fn}`, {
+  const res = await fetch(`${env.url}/rest/v1/rpc/${fn}`, {
     method: 'POST',
     headers: {
       ...headers,
@@ -120,11 +121,10 @@ export async function sbMutate(
   const env = getSupabaseEnv();
   if (!env) throw new Error('Supabase env vars are missing.');
 
-  const { url } = env;
-  const headers = await authHeaders();
+  const headers = await getRestHeaders();
   if (!headers) throw new Error('Supabase auth headers are unavailable.');
 
-  const res = await fetch(`${url}/rest/v1/${table}${filter ? `?${filter}` : ''}`, {
+  const res = await fetch(`${env.url}/rest/v1/${table}${filter ? `?${filter}` : ''}`, {
     method,
     headers: {
       ...headers,
