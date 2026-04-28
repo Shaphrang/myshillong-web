@@ -1,0 +1,12 @@
+export const loginSchema = { parse: (data: { email: string; password: string }) => data };
+export const localitySchema = { parse: (data: unknown) => data };
+export const categorySchema = { parse: (data: unknown) => data };
+export const subcategorySchema = { parse: (data: unknown) => data };
+export const vendorSchema = { parse: (data: unknown) => data };
+export const foodProfileSchema = { parse: (data: unknown) => data };
+export const fashionProfileSchema = { parse: (data: unknown) => data };
+export const dealSchema = { parse: (data: unknown) => data };
+export const sponsoredPlacementSchema = { parse: (data: unknown) => data };
+export const vendorPlanSchema = { parse: (data: unknown) => data };
+export const vendorSubscriptionSchema = { parse: (data: unknown) => data };
+export const mediaAssetSchema = { parse: (data: unknown) => data };

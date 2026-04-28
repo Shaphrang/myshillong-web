@@ -2,30 +2,51 @@
 
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { SUPABASE_ANON_KEY, SUPABASE_URL } from '@/lib/supabase/client';
+import { getSupabaseEnv } from '@/lib/supabase/client';
+import { sbSelect } from '@/lib/supabase/server';
 
-export async function loginAdmin(formData: FormData) {
-  const email = String(formData.get('email') ?? '');
+function toError(message: string) {
+  return `/admin/login?error=${encodeURIComponent(message)}`;
+}
+
+export async function loginAdminAction(formData: FormData) {
+  const email = String(formData.get('email') ?? '').trim();
   const password = String(formData.get('password') ?? '');
 
-  const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+  if (!email || !password) redirect(toError('Email and password are required.'));
+
+  const env = getSupabaseEnv();
+  if (!env) redirect(toError('Supabase environment variables are not configured.'));
+  const { key, url } = env;
+  const response = await fetch(`${url}/auth/v1/token?grant_type=password`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', apikey: SUPABASE_ANON_KEY },
+    headers: { 'Content-Type': 'application/json', apikey: key },
     body: JSON.stringify({ email, password }),
   });
-  const data = await res.json();
-  if (!res.ok || !data.access_token) redirect('/admin/login?error=invalid_credentials');
+
+  const data = await response.json();
+  if (!response.ok || !data?.access_token) redirect(toError('Invalid email or password.'));
 
   const cookieStore = await cookies();
   cookieStore.set('sb-access-token', data.access_token, { httpOnly: true, sameSite: 'lax', path: '/' });
   cookieStore.set('sb-refresh-token', data.refresh_token, { httpOnly: true, sameSite: 'lax', path: '/' });
 
+  const [adminProfile] = await sbSelect('admin_profiles', `id,is_active&id=eq.${data.user?.id}`).catch(() => []);
+  if (!adminProfile?.is_active) {
+    cookieStore.delete('sb-access-token');
+    cookieStore.delete('sb-refresh-token');
+    redirect(toError('Your account is not authorized for admin access.'));
+  }
+
   redirect('/admin/dashboard');
 }
 
-export async function logoutAdmin() {
+export async function logoutAdminAction() {
   const cookieStore = await cookies();
   cookieStore.delete('sb-access-token');
   cookieStore.delete('sb-refresh-token');
   redirect('/admin/login');
 }
+
+export const loginAdmin = loginAdminAction;
+export const logoutAdmin = logoutAdminAction;
