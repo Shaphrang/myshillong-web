@@ -3,7 +3,7 @@ import { StatCard } from '@/components/admin/StatCard';
 import { sbSelect } from '@/lib/supabase/server';
 
 export default async function DashboardPage() {
-  const [stats] = await sbSelect('v_admin_dashboard_stats').catch(() => [{} as Record<string, number>]);
+  const [stats = {} as Record<string, number>] = await sbSelect('v_admin_dashboard_stats').catch(() => [{} as Record<string, number>]);
   const recentVendors = await sbSelect('vendors', 'id,name,status,created_at').catch(() => []);
   const recentDeals = await sbSelect('deals', 'id,title,status,created_at').catch(() => []);
 

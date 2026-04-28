@@ -1,0 +1,13 @@
+export type AdminProfile = { id: string; full_name: string | null; role: string | null; is_active: boolean };
+export type Locality = { id: string; name: string; slug: string; district: string | null; state: string | null; country: string | null; is_active: boolean };
+export type Category = { id: string; name: string; slug: string; is_active: boolean };
+export type Subcategory = { id: string; category_id: string; name: string; slug: string; is_active: boolean };
+export type Vendor = { id: string; name: string; slug: string; status: string; locality_id: string | null; owner_phone: string | null; whatsapp: string | null; is_featured: boolean; is_verified: boolean; priority: number };
+export type VendorCategory = { id: string; vendor_id: string; category_id: string; subcategory_id: string | null };
+export type FoodProfile = { id: string; vendor_id: string; cuisine_types: string[] | null; food_types: string[] | null; services: string[] | null };
+export type FashionProfile = { id: string; vendor_id: string; product_types: string[] | null; gender_focus: string[] | null; services: string[] | null };
+export type Deal = { id: string; vendor_id: string; title: string; slug: string; status: string; is_featured: boolean; priority: number };
+export type SponsoredPlacement = { id: string; placement_key: string; title: string | null; status: string; billing_status: string | null };
+export type VendorPlan = { id: string; name: string; slug: string; price_monthly: number; is_active: boolean };
+export type VendorSubscription = { id: string; vendor_id: string; plan_id: string; starts_at: string; ends_at: string | null; billing_status: string };
+export type DashboardStats = { total_vendors: number; active_vendors: number; pending_vendors: number; active_deals: number; active_ads: number; vendor_views: number; whatsapp_clicks: number; phone_clicks: number; ad_impressions: number; ad_clicks: number; estimated_revenue: number };
