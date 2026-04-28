@@ -1,3 +1,4 @@
+//src\app\admin\login\page.tsx
 import { redirect } from 'next/navigation';
 import { loginAdminAction } from './actions';
 import { getCurrentAdmin } from '@/lib/admin/auth';
