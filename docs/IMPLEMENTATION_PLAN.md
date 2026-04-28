@@ -9,7 +9,7 @@ VALUES ('PASTE_AUTH_USER_UUID_HERE', 'Main Admin', 'owner', true);
 4. Configure `.env.local`:
 ```bash
 NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 ```
 5. Run app: `npm run dev`.
 6. Login via `/admin/login`.

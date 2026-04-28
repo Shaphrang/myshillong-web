@@ -1,18 +1,40 @@
 import { redirect } from 'next/navigation';
-import { getAuthUser, sbSelect } from '@/lib/supabase/server';
+import { createClient } from '@/lib/supabase/server';
 
 export async function getCurrentAdmin() {
-  const user = await getAuthUser();
-  if (!user?.id) return null;
+  const supabase = await createClient();
 
-  const [profile] = await sbSelect('admin_profiles', `id,full_name,role,is_active&id=eq.${user.id}`).catch(() => []);
-  if (!profile?.is_active) return null;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  return { user, profile };
+  if (!user) {
+    return null;
+  }
+
+  const { data: adminProfile } = await supabase
+    .from('admin_profiles')
+    .select('id, full_name, role, is_active')
+    .eq('id', user.id)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  if (!adminProfile) {
+    return null;
+  }
+
+  return {
+    user,
+    profile: adminProfile,
+  };
 }
 
 export async function requireAdmin() {
   const admin = await getCurrentAdmin();
-  if (!admin) redirect('/admin/login');
+
+  if (!admin) {
+    redirect('/admin/login');
+  }
+
   return admin;
 }

@@ -1,7 +1,7 @@
 # Deployment Guide
 ## Env Vars
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
 ## Supabase Setup
 1. Run SQL files in order (or `000_full_schema.sql`).
