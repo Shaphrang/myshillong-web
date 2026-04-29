@@ -107,14 +107,15 @@ function mapSponsoredVendors(placements: SponsoredPlacement[]): HomeVendorItem[]
 }
 
 export async function getHomePageData(): Promise<HomePageData> {
-  const [vendors, deals, placements] = await Promise.all([
-    sbSelect('v_public_vendors', '*', { order: 'priority.desc,name.asc', limit: '8' }).catch(() => []),
-    sbSelect('v_public_deals', '*', { order: 'priority.desc,view_count.desc', limit: '8' }).catch(() => []),
-    sbSelect('v_active_sponsored_placements', '*', { order: 'priority.desc,weight.desc', limit: '12' }).catch(() => []),
+  const [foodVendors, clothingVendors, deals, placements] = await Promise.all([
+    sbSelect('food_vendors', '*', { status: 'eq.active', is_active: 'eq.true', order: 'priority.desc,created_at.desc', limit: '4' }).catch(() => []),
+    sbSelect('clothing_vendors', '*', { status: 'eq.active', is_active: 'eq.true', order: 'priority.desc,created_at.desc', limit: '4' }).catch(() => []),
+    sbSelect('deals', '*', { status: 'eq.active', is_active: 'eq.true', order: 'priority.desc,created_at.desc', limit: '8' }).catch(() => []),
+    Promise.resolve([]),
   ]);
 
   const placementRows = (placements as SponsoredPlacement[]) || [];
-  const vendorRows = (vendors as PublicVendor[]) || [];
+  const vendorRows: PublicVendor[] = [...(foodVendors as PublicVendor[]), ...(clothingVendors as PublicVendor[])];
   const dealRows = (deals as PublicDeal[]) || [];
 
   const sponsoredHeroSlides = mapSponsoredHero(placementRows);
