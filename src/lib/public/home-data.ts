@@ -22,14 +22,6 @@ type PublicDealRow = {
   cover_image_path?: string | null;
 };
 
-type SponsoredPlacementRow = {
-  placement_key?: string;
-  title?: string | null;
-  subtitle?: string | null;
-  image_path?: string | null;
-  cta_label?: string | null;
-};
-
 function safeSlug(slug?: string) {
   if (!slug) return '#';
   return slug.startsWith('/') ? slug : `/vendors/${slug}`;
@@ -63,18 +55,14 @@ function mapBusinessRows(rows: PublicVendorRow[]): HomeBusiness[] {
 }
 
 export async function getHomePageData(): Promise<HomePageData> {
-  const [vendorsRaw, dealsRaw, sponsoredRaw] = await Promise.all([
-    sbSelect('v_public_vendors', '*', { order: 'priority.desc,name.asc', limit: '8' }).catch(() => []),
-    sbSelect('v_public_deals', '*', { order: 'priority.desc,view_count.desc', limit: '8' }).catch(() => []),
-    sbSelect('v_active_sponsored_placements', '*', { order: 'priority.desc,weight.desc', limit: '8' }).catch(() => []),
+  const [foodVendorsRaw, clothingVendorsRaw, dealsRaw] = await Promise.all([
+    sbSelect('food_vendors', '*', { status: 'eq.active', is_active: 'eq.true', selected_pages: 'cs.{homepage}', order: 'priority.desc,created_at.desc', limit: '4' }).catch(() => []),
+    sbSelect('clothing_vendors', '*', { status: 'eq.active', is_active: 'eq.true', selected_pages: 'cs.{homepage}', order: 'priority.desc,created_at.desc', limit: '4' }).catch(() => []),
+    sbSelect('deals', '*', { status: 'eq.active', is_active: 'eq.true', selected_pages: 'cs.{homepage}', order: 'priority.desc,created_at.desc', limit: '8' }).catch(() => []),
   ]);
 
-  const vendors = mapBusinessRows((vendorsRaw as PublicVendorRow[]) ?? []);
+  const vendors = mapBusinessRows([...(foodVendorsRaw as PublicVendorRow[]), ...(clothingVendorsRaw as PublicVendorRow[])]);
   const deals = mapDealRows((dealsRaw as PublicDealRow[]) ?? []);
-  const sponsored = (sponsoredRaw as SponsoredPlacementRow[]) ?? [];
-
-  const heroPlacement = sponsored.find((item) => item.placement_key === 'home_hero' || item.placement_key === 'app_home_carousel');
-  const featuredPlacement = sponsored.find((item) => item.placement_key === 'home_featured_vendors');
 
   return {
     ...homeDemoData,
@@ -82,17 +70,17 @@ export async function getHomePageData(): Promise<HomePageData> {
     nearbyBusinesses: vendors.length > 0 ? vendors.slice(0, 3) : homeDemoData.nearbyBusinesses,
     hero: {
       ...homeDemoData.hero,
-      title: heroPlacement?.title || homeDemoData.hero.title,
-      subtitle: heroPlacement?.subtitle || homeDemoData.hero.subtitle,
-      ctaLabel: heroPlacement?.cta_label || homeDemoData.hero.ctaLabel,
-      imagePath: getPublicStorageUrl(heroPlacement?.image_path) || homeDemoData.hero.imagePath,
+      title: homeDemoData.hero.title,
+      subtitle: homeDemoData.hero.subtitle,
+      ctaLabel: homeDemoData.hero.ctaLabel,
+      imagePath: homeDemoData.hero.imagePath,
     },
     featuredMerchant: {
       ...homeDemoData.featuredMerchant,
-      name: featuredPlacement?.title || homeDemoData.featuredMerchant.name,
-      description: featuredPlacement?.subtitle || homeDemoData.featuredMerchant.description,
-      ctaLabel: featuredPlacement?.cta_label || homeDemoData.featuredMerchant.ctaLabel,
-      imagePath: getPublicStorageUrl(featuredPlacement?.image_path) || homeDemoData.featuredMerchant.imagePath,
+      name: homeDemoData.featuredMerchant.name,
+      description: homeDemoData.featuredMerchant.description,
+      ctaLabel: homeDemoData.featuredMerchant.ctaLabel,
+      imagePath: homeDemoData.featuredMerchant.imagePath,
     },
   };
 }
